@@ -1,0 +1,43 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin</title>
+<style>body{font:15px sans-serif;max-width:760px;margin:20px auto;padding:0 14px}label{display:block;margin:8px 0 2px;font-weight:600;font-size:13px}input,textarea{width:100%;padding:8px;border:1px solid #bbb;border-radius:6px;box-sizing:border-box}
+fieldset{margin:16px 0;border:1px solid #ddd;border-radius:8px}legend{font-weight:700}button{padding:10px 18px;border:0;border-radius:6px;background:#058fff;color:#fff;cursor:pointer;margin:4px 8px 4px 0}#st{background:#eef;padding:10px;border-radius:6px;display:none;word-break:break-all}a{cursor:pointer;color:#058fff}</style></head><body>
+<h2>Landing Page Admin</h2><div id="st"></div>
+<fieldset><legend>GitHub connection (stored only in this browser)</legend>
+<label>Fine-grained token (Contents: read & write on this repo)</label><input id="tok" type="password">
+<div style="display:flex;gap:8px"><div style="flex:1"><label>Owner</label><input id="own"></div><div style="flex:1"><label>Repo</label><input id="rep"></div><div style="flex:1"><label>Branch</label><input id="br" value="main"></div></div>
+<button onclick="conn()">Connect & list pages</button></fieldset>
+<div id="list"></div><form id="f" onsubmit="return false"></form>
+<script>
+const $=i=>document.getElementById(i);
+const S=JSON.parse(localStorage.ghcfg||'{}');
+$('tok').value=S.tok||'';$('own').value=S.own||(location.hostname.endsWith('github.io')?location.hostname.split('.')[0]:'');$('rep').value=S.rep||(location.pathname.split('/')[1]&&!location.pathname.split('/')[1].endsWith('.html')?location.pathname.split('/')[1]:'');$('br').value=S.br||'main';
+const def={slug:'',project:'Black Sea Resort',developer:'Opus Development',type:'Apartments',beds:'Studio',size:'414 Sqft.',location:'Batumi',view:'Sea View',furnished:'Fully Furnished',parking:'No',maintenance:'10/Sqft',handover:'Q4, 2028',price:'4412222',book_pct:'10',rem_pct:'30',rem_months:'30',handover_pct:'30',post_pct:'30',post_months:'24',rate_usd:'0.2723',rate_gel:'0.74',rate_inr:'22.9',gallery:'https://yoursite.com/wp-content/uploads/img1.jpg\nhttps://yoursite.com/wp-content/uploads/img2.jpg',nearby:'Beach|500 Meters\nHotel|1 Km\nRestaurant|40 Meters\nAirport|20 Kms\nShopping|50 Meters\nSchool|2 Kms\nDowntown|30 Kms\nPark|100 Meters',about_project:'',about_dev:'',agent_name:'Charandeep Singh',agent_title:'Sr. Sales Director',agent_photo:'',whatsapp:'971500000000',phone:'+971500000000'};
+const grp={'Overview':['project','developer','type','beds','size','location','view','furnished','parking','maintenance','handover'],'Price (AED) & Payment Plan (%)':['price','book_pct','rem_pct','rem_months','handover_pct','post_pct','post_months'],'Currency rates (1 AED =)':['rate_usd','rate_gel','rate_inr'],'Agent (WhatsApp number: country code, no +)':['agent_name','agent_title','agent_photo','whatsapp','phone']};
+const txt={gallery:'Gallery image URLs (full https:// links, one per line; first = WhatsApp preview image)',nearby:'Nearby (Label|Distance per line)',about_project:'About Project',about_dev:'About Developer'};
+const nice=k=>k.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+const say=(m)=>{$('st').style.display='block';$('st').innerHTML=m};
+function cfg(){S.tok=$('tok').value.trim();S.own=$('own').value.trim();S.rep=$('rep').value.trim();S.br=$('br').value.trim()||'main';localStorage.ghcfg=JSON.stringify(S)}
+async function api(p,o={}){const r=await fetch('https://api.github.com/repos/'+S.own+'/'+S.rep+'/contents/'+p+(o.method?'':'?ref='+S.br+'&t='+Date.now()),{...o,headers:{Authorization:'Bearer '+S.tok,Accept:o.raw?'application/vnd.github.raw+json':'application/vnd.github+json'}});
+ if(r.status==404)return null;if(!r.ok)throw new Error('GitHub error '+r.status);return o.raw?r.text():r.json()}
+const b64=s=>btoa(unescape(encodeURIComponent(s)));
+async function put(path,content,msg){const ex=await api(path);const r=await fetch('https://api.github.com/repos/'+S.own+'/'+S.rep+'/contents/'+path,{method:'PUT',headers:{Authorization:'Bearer '+S.tok,Accept:'application/vnd.github+json'},body:JSON.stringify({message:msg,content:b64(content),branch:S.br,...(ex?{sha:ex.sha}:{})})});if(!r.ok)throw new Error('Save failed '+r.status)}
+async function del(path){const ex=await api(path);if(ex)await fetch('https://api.github.com/repos/'+S.own+'/'+S.rep+'/contents/'+path,{method:'DELETE',headers:{Authorization:'Bearer '+S.tok},body:JSON.stringify({message:'Delete '+path,sha:ex.sha,branch:S.br})})}
+const sg=s=>s.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+const url=s=>'https://'+S.own+'.github.io/'+(S.rep.toLowerCase()==S.own.toLowerCase()+'.github.io'?'':S.rep+'/')+'p/'+s+'/';
+async function conn(){cfg();try{const l=await api('data')||[];$('list').innerHTML='<p><a onclick="form(def)">+ New page</a></p><ul>'+l.filter(f=>f.name.endsWith('.json')).map(f=>{const s=f.name.slice(0,-5);return '<li>'+s+' — <a onclick="edit(\''+s+'\')">edit</a> · <a target=_blank href="'+url(s)+'">view</a> · <a onclick="rm(\''+s+'\')">delete</a></li>'}).join('')+'</ul>';form(def);say('Connected.')}catch(e){say(e.message)}}
+async function edit(s){form({...def,...JSON.parse(await api('data/'+s+'.json',{raw:1,method:undefined})||await (await fetch('https://raw.githubusercontent.com/'+S.own+'/'+S.rep+'/'+S.br+'/data/'+s+'.json')).text())})}
+async function rm(s){if(!confirm('Delete '+s+'?'))return;await del('data/'+s+'.json');await del('p/'+s+'/index.html');conn()}
+function form(d){$('f').innerHTML='<label>Page slug (used in link)</label><input name=slug value="'+(d.slug||'')+'" placeholder="black-sea-resort">'+Object.entries(grp).map(([g,ks])=>'<fieldset><legend>'+g+'</legend>'+ks.map(k=>'<label>'+nice(k)+'</label><input name='+k+' value="'+String(d[k]).replace(/"/g,'&quot;')+'">').join('')+'</fieldset>').join('')
+ +Object.entries(txt).map(([k,l])=>'<label>'+l+'</label><textarea name='+k+' rows=5>'+String(d[k]).replace(/</g,'&lt;')+'</textarea>').join('')
+ +'<fieldset><legend>Save</legend><button onclick="save(false)">Save current page</button><br><label>Or save as a new page (new slug)</label><input id="ns" placeholder="another-project"><button style="background:#333" onclick="save(true)">Save as new page</button></fieldset>'}
+async function save(asNew){cfg();const fd=new FormData($('f')),d={};for(const k in def)d[k]=fd.get(k)??'';
+ const s=sg(asNew?$('ns').value:d.slug);if(!s)return say('Enter a page slug.');
+ try{if(asNew&&await api('data/'+s+'.json'))return say('That slug already exists.');d.slug=s;say('Saving…');
+ let t=await (await fetch('index.html?v='+Date.now())).text();
+ const img=(d.gallery.split('\n')[0]||'').trim(),q=x=>x.replace(/"/g,'&quot;');
+ const og='<meta property="og:title" content="'+q(d.project)+'"><meta property="og:description" content="'+q(d.type+' · '+d.location+' · '+d.size)+'">'+(img?'<meta property="og:image" content="'+q(img)+'">':'');
+ t=t.replace('<title>Property</title>','<title>'+q(d.project)+'</title>').replace('<!--OG-->',og).replace("window.CFG={slug:null,base:''}",'window.CFG={slug:"'+s+'",base:"../../"}');
+ await put('data/'+s+'.json',JSON.stringify(d,null,2),'Save page '+s);await put('p/'+s+'/index.html',t,'Build page '+s);
+ say('Saved ✔ Live in about 1 minute at:<br><a target=_blank href="'+url(s)+'">'+url(s)+'</a>');conn()}catch(e){say(e.message)}}
+if(S.tok&&S.own&&S.rep)conn();else form(def);
+</script></body></html>
