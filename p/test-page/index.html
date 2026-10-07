@@ -1,6 +1,6 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Test Project A</title>
-<meta property="og:title" content="Test Project A"><meta property="og:description" content="Apartments · Batumi · 414 Sqft."><meta property="og:image" content="https://www.image2url.com/r2/default/files/1791226637864-02e98208-6f86-426c-9e92-becec4dcd29d.jpeg">
+<meta property="og:title" content="Test Project A"><meta property="og:description" content="Apartments · Batumi, Georgia · 414 Sqft."><meta property="og:image" content="https://www.image2url.com/r2/default/files/1791226637864-02e98208-6f86-426c-9e92-becec4dcd29d.jpeg">
 <style>
 *{box-sizing:border-box}body{margin:0;font:16px/1.5 Inter,system-ui,sans-serif;color:#4f4f4f;background:#fff;padding-bottom:110px}
 .w{max-width:520px;margin:0 auto;padding:16px}h2{font-size:20px;margin:32px 0 12px;padding-bottom:8px;border-bottom:1px solid #999}
@@ -21,6 +21,7 @@ p.t{font-size:14.5px;white-space:pre-line}
 .opt{display:block;width:100%;background:none;border:0;border-bottom:1px solid #999;color:#058fff;font-size:24px;padding:18px 0;cursor:pointer;text-align:center}.opt:last-child{border:0}
 .fr{display:flex;align-items:center;margin:12px 0}.fr label{width:38%}.fr input,.fr select{flex:1;min-width:0;padding:12px;border:1px solid #bbb;border-radius:8px;background:#f9f9f9;font-size:15px}.tm{flex:1;display:flex;gap:6px}
 .sb{width:100%;margin-top:24px;padding:16px;font-size:18px}.note{font-size:13px;color:#999;margin-top:12px}.note b{color:#f55;font-weight:400}.ty{text-align:center}.ty h3{font-weight:700;font-size:44px;border:0}
+.gal .s{display:none;width:100%;height:100%}.gal .s.on{display:block}.gal .s img{display:block}.gal iframe,.gal video{width:100%;height:100%;border:0;background:#000}.gal button{z-index:2}.pr select{padding:6px 8px;border:1px solid #bbb;border-radius:8px;font-size:15px;background:#f4f4f4}.disc{font-size:12.5px;color:#888;margin-top:36px;border-top:1px solid #ddd;padding-top:12px}
 </style></head><body><div class="w" id="app"></div>
 <div class="bar" id="bar" style="display:none"><div class="in"><div class="av" id="av"></div><div class="n"><b id="an"></b><span id="at"></span></div><button class="btn" onclick="op('m1')">Contact Now!</button></div></div>
 <div class="ov" id="m1"><button class="x" onclick="cl()">✕</button><div class="card" style="padding:20px 28px">
@@ -30,7 +31,7 @@ p.t{font-size:14.5px;white-space:pre-line}
 <div class="ov" id="m2"><button class="x" onclick="cl()">✕</button><div class="card"><h3>Book a Zoom Meeting</h3>
 <form id="zf"><div class="fr"><label>Your Name</label><input id="zn" required></div>
 <div class="fr"><label>No. of Guests</label><input id="zg" type="number" min="1" required></div>
-<div class="fr"><label>Pick a Time</label><div class="tm"><select id="zh" required><option value="">Hr</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option></select><select id="zm" required><option value="">Min</option><option>00</option><option>15</option><option>30</option><option>45</option></select><select id="zp"><option>AM</option><option>PM</option></select></div></div>
+<div class="fr"><label>Time</label><input id="zt" type="text" placeholder="e.g. 3:30 PM" required></div>
 <div class="fr"><label>Pick a Date</label><input id="zd" type="date" required></div>
 <button class="btn sb">Submit a Request</button></form>
 <div class="note"><b>All fields are mandatory.</b> By submitting this form, you're accepting the agent or agency to contact you.</div></div></div>
@@ -40,34 +41,45 @@ window.CFG={slug:"test-page",base:"../../"};
 const C=window.CFG,$=i=>document.getElementById(i);
 const slug=C.slug||new URLSearchParams(location.search).get('p')||'default';
 let D={},cur='AED',si=0;
+const SY={AED:'AED ',USD:'$',GEL:'₾',INR:'₹'};
 const E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-fetch(C.base+'data/'+slug+'.json?v='+Date.now()).then(r=>{if(!r.ok)throw 0;return r.json()}).then(init).catch(()=>$('app').innerHTML='<p>Page not found.</p>');
-function init(d){
- document.title=d.project;const P=+d.price,n=k=>+d[k]||0,m1=Math.max(1,n('rem_months')),m2=Math.max(1,n('post_months'));
- const bk=P*n('book_pct')/100,rem=P*n('rem_pct')/100,ho=P*n('handover_pct')/100,ph=P*n('post_pct')/100,dc=bk+rem,tot=dc+ho+ph;
+const M=u=>/^(https?:)?\/\//.test(u)?u:C.base+u;
+async function fx(){try{const c=JSON.parse(localStorage.fx||'null');if(c&&Date.now()-c.t<432e5)return c.r}catch(e){}
+ try{const j=await(await fetch('https://open.er-api.com/v6/latest/AED')).json();const r={USD:j.rates.USD,GEL:j.rates.GEL,INR:j.rates.INR};try{localStorage.fx=JSON.stringify({t:Date.now(),r})}catch(e){}return r}catch(e){return{USD:.2723,GEL:.74,INR:22.9}}}
+Promise.all([fetch(C.base+'data/'+slug+'.json?v='+Date.now()).then(r=>{if(!r.ok)throw 0;return r.json()}),fx()]).then(([d,r])=>init(d,r)).catch(()=>$('app').innerHTML='<p>Page not found.</p>');
+const yt=u=>{const m=u.match(/(?:youtu\.be\/|v=|embed\/|shorts\/)([\w-]{11})/);return m&&m[1]};
+function init(d,r){
+ document.title=d.project;const P=+d.price||0,n=k=>+d[k]||0;
  const a=v=>'<span class="amt" data-aed="'+v.toFixed(2)+'"></span>';
- const imgs=d.gallery.split('\n').map(s=>s.trim()).filter(Boolean);
- const ov=[['Project','project'],['Developer','developer'],['Type','type'],['Beds','beds'],['Size','size'],['Location','location'],['Unit View','view'],['Furnished?','furnished'],['Parking?','parking'],['Maintenance Fee','maintenance'],['Handover','handover']];
- const near=d.nearby.split('\n').map(l=>l.split('|')).filter(p=>p.length>1);
- $('app').innerHTML='<div class="gal">'+imgs.map((u,i)=>'<img src="'+E(u)+'" class="'+(i?'':'on')+'">').join('')+(imgs.length>1?'<button style="left:6px" onclick="sl(-1)">←</button><button style="right:6px" onclick="sl(1)">→</button>':'')+'</div>'
- +'<div class="pr">Price <span id="price"></span><span class="c">'+['AED','USD','GEL','INR'].map(c=>'<b data-c="'+c+'">'+c+'</b>').join('')+'</span></div>'
+ const st=k=>d['pp_'+k+'_on']!==false&&n('pp_'+k+'_pct')>0,tv=k=>st(k)?P*n('pp_'+k+'_pct')/100:0;
+ const row=(l,k)=>{const mo=Math.floor(n('pp_'+k+'_months')),v=tv(k);return '<div class="r"><div>'+l+'</div><div>'+n('pp_'+k+'_pct')+'%'+(mo>0?' over '+mo+' months<br><small>('+a(v/mo)+' / month)</small>':'<br><small>One-time</small>')+'</div><div>'+a(v)+'</div></div>'};
+ const grp=(t,ks,lb)=>{const any=ks.some(st);return '<div class="sub"><span>'+t+'</span><span>'+(any?a(ks.reduce((s,k)=>s+tv(k),0)):'Not required')+'</span></div>'+(any?'<div class="box">'+ks.filter(st).map(k=>row(lb[k],k)).join('')+'</div>':'')};
+ const tot=['book','rem','ho','post'].reduce((s,k)=>s+tv(k),0);
+ const lines=t=>(t||'').split('\n').map(l=>l.split('|')).filter(p=>p[0].trim());
+ const list=(h,t)=>{const l=lines(t);return l.length?'<h2>'+h+'</h2>'+l.map(p=>'<div class="r"><div>'+E(p[0].trim())+'</div><div>'+(p.length>1?E(p[1].trim()):'✓')+'</div></div>').join(''):''};
+ const imgs=(d.gallery||'').split('\n').map(s=>s.trim()).filter(Boolean);
+ const sd=imgs.map(u=>'<div class="s"><img src="'+E(M(u))+'"></div>'),v=(d.video||'').trim();
+ if(v){const id=yt(v);sd.push(id?'<div class="s"><iframe data-src="https://www.youtube-nocookie.com/embed/'+id+'" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>':'<div class="s"><video data-src="'+E(M(v))+'" controls playsinline></video></div>')}
+ const ov=[['Project','project'],['Developer','developer'],['Type','type'],['Beds','beds'],['Size','size'],['Location','location'],['Unit View','view'],['Furnished?','furnished'],['Parking?','parking'],['Maintenance Fee','maintenance'],['Handover','handover']].filter(o=>d['show_'+o[1]]!==false&&String(d[o[1]]||'').trim());
+ const txt=(h,t)=>t&&t.trim()?'<h2>'+h+'</h2><p class="t">'+E(t)+'</p>':'';
+ $('app').innerHTML='<div class="gal">'+sd.join('')+(sd.length>1?'<button style="left:6px" onclick="go(si-1)">←</button><button style="right:6px" onclick="go(si+1)">→</button>':'')+'</div>'
+ +'<div class="pr">Price <span id="price"></span><select id="cs"><option>AED</option><option>USD</option><option>GEL</option><option>INR</option></select></div>'
  +'<h2>Overview</h2>'+ov.map(o=>'<div class="r"><div>'+o[0]+'</div><div>'+E(d[o[1]])+'</div></div>').join('')
- +'<h2>Payment Plan</h2><div class="sub"><span>During Construction</span><span>'+a(dc)+'</span></div>'
- +'<div class="box"><div class="r"><div>Book Amount</div><div>'+E(d.book_pct)+'%</div><div>'+a(bk)+'</div></div><div class="r"><div>Remaining</div><div>'+E(d.rem_pct)+'% over '+m1+' months<br><small>('+a(rem/m1)+' / month)</small></div><div>'+a(rem)+'</div></div></div>'
- +'<div class="sub"><span>On Handover ('+E(d.handover_pct)+'%)</span><span>'+a(ho)+'</span></div>'
- +'<div class="sub"><span>Post Handover</span><span>'+a(ph)+'</span></div><div class="box"><div class="r"><div>Pay</div><div>'+E(d.post_pct)+'% over '+m2+' months<br><small>('+a(ph/m2)+' / month)</small></div><div>'+a(ph)+'</div></div></div>'
+ +'<h2>Payment Plan</h2>'+grp('During Construction',['book','rem'],{book:'Book Amount',rem:'Remaining'})+grp('On Handover',['ho'],{ho:'Payment'})+grp('Post Handover',['post'],{post:'Pay'})
  +'<div class="tot"><span>Total</span><span>'+a(tot)+'</span></div>'
- +'<h2>Nearby Locations</h2>'+near.map(p=>'<div class="r"><div>'+E(p[0].trim())+'</div><div>'+E(p[1].trim())+'</div></div>').join('')
- +'<h2>About Project</h2><p class="t">'+E(d.about_project)+'</p><h2>About Developer</h2><p class="t">'+E(d.about_dev)+'</p>';
+ +list('Amenities',d.amenities)+list('Nearby Locations',d.nearby)
+ +(d.map?'<h2>Location Map</h2><img src="'+E(M(d.map))+'" style="width:100%;border-radius:8px">':'')
+ +txt('About Project',d.about_project)+txt('About Developer',d.about_dev)
+ +'<p class="disc">Disclaimer: Price, size and offers shown are for reference only. Actual price, size and offers may vary at the time of booking. Currency conversions use indicative exchange rates.</p>';
  $('av').style.backgroundImage="url('"+E(d.agent_photo)+"')";$('an').textContent=d.agent_name;$('at').textContent=d.agent_title;$('bar').style.display='';
- D={proj:d.project,wa:String(d.whatsapp).replace(/\D/g,''),tel:d.phone,price:P,rates:{AED:1,USD:+d.rate_usd,GEL:+d.rate_gel,INR:+d.rate_inr}};
- document.querySelectorAll('.c b').forEach(b=>b.onclick=()=>{cur=b.dataset.c;draw()});draw();
+ D={proj:d.project,wa:String(d.whatsapp).replace(/\D/g,''),tel:d.phone,price:P,rates:{AED:1,...r}};
+ $('cs').onchange=e=>{cur=e.target.value;draw()};draw();if(sd.length)go(0);
 }
-function fm(v,n){return new Intl.NumberFormat('en-US',{minimumFractionDigits:n,maximumFractionDigits:n}).format(v*D.rates[cur])}
-function draw(){document.querySelectorAll('.amt').forEach(s=>s.textContent=fm(+s.dataset.aed,2));$('price').textContent=fm(D.price,0);document.querySelectorAll('.c b').forEach(b=>b.classList.toggle('on',b.dataset.c==cur))}
-function sl(n){const g=document.querySelectorAll('.gal img');g[si].classList.remove('on');si=(si+n+g.length)%g.length;g[si].classList.add('on')}
+function fm(v,n){return SY[cur]+new Intl.NumberFormat('en-US',{minimumFractionDigits:n,maximumFractionDigits:n}).format(v*D.rates[cur])}
+function draw(){document.querySelectorAll('.amt').forEach(s=>s.textContent=fm(+s.dataset.aed,2));$('price').textContent=fm(D.price,0)}
+function go(i){const g=[...document.querySelectorAll('.gal .s')];si=(i+g.length)%g.length;g.forEach((e,j)=>{e.classList.toggle('on',j==si);const m=e.querySelector('iframe,video');if(m){if(j==si)m.src=m.dataset.src;else{if(m.pause)m.pause();m.removeAttribute('src');if(m.load)m.load()}}})}
 function op(id){cl();$(id).classList.add('on')}function cl(){document.querySelectorAll('.ov').forEach(o=>o.classList.remove('on'))}
 function wa(t){window.open('https://wa.me/'+D.wa+'?text='+encodeURIComponent(t),'_blank')}
 $('zf').onsubmit=e=>{e.preventDefault();const v=i=>$(i).value;
- wa('Zoom meeting request for '+D.proj+'\nName: '+v('zn')+'\nGuests: '+v('zg')+'\nTime: '+v('zh')+':'+v('zm')+' '+v('zp')+'\nDate: '+v('zd'));e.target.reset();op('m3')};
+ wa('Zoom meeting request for '+D.proj+'\nName: '+v('zn')+'\nGuests: '+v('zg')+'\nTime: '+v('zt')+'\nDate: '+v('zd'));e.target.reset();op('m3')};
 </script></body></html>
